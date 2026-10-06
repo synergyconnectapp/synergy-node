@@ -1,10 +1,17 @@
-name: Release
+name: Publish to npm
 
-# A tag v*.*.* releases the package to the registry with provenance. Nothing releases before the contract test (K2) and
-# the MCP (M1) are green (devtools.md §5.8, U2): the first tag, v1.0.0, is the P1 step.
+# A tag v*.*.* publishes the package through the npm Trusted Publisher of this repository: there is no npm token in
+# the secrets, and the provenance comes from the OIDC identity of this run. Every Action is pinned by the SHA of a
+# commit (devtools.md §5.8, S-46): a tag can be moved, a commit SHA cannot.
+#
+# One-time setup on npmjs.com (Packages → @synergyconnect/sdk → Settings → Trusted publishing → GitHub Actions):
+# owner `gabriel-g2n`, repository `synergy-node`, workflow `publish.yml`, allowed action: direct publishing. The
+# package must already exist, so the very first version (1.0.0) is created with a staged publish (or a first manual
+# publish with `--access public`); configure the Trusted Publisher afterwards and create it only when the tag is
+# ready, because an unvalidated configuration expires after 48 hours.
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -14,19 +21,34 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm Trusted Publisher + provenance
+      id-token: write # npm Trusted Publisher (OIDC) and provenance
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22
+          node-version: 24 # npm >= 11.5.1 is required by Trusted Publishing
           registry-url: https://registry.npmjs.org
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-      - run: npx publint
-      - run: npx @arethetypeswrong/cli --pack .
-      - run: npm publish --provenance --access public
+          package-manager-cache: false # never use caching in release builds
+
+      - name: Check the tag matches package.json
+        run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Check the package
+        run: npx publint && npx @arethetypeswrong/cli --pack .
+
+      - name: Publish
+        run: npm publish --provenance --access public

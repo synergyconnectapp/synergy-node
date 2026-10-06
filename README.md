@@ -3,9 +3,14 @@
 SDK oficial para a API pública do [Synergy Connect](https://synergyconnect.com.br) (WhatsApp). Sem dependências, só
 `fetch` e `crypto.subtle`: roda em Node ≥ 20, Bun, Deno e Cloudflare Workers.
 
+## Instalação
+
 ```sh
 npm install @synergyconnect/sdk
 ```
+
+Funciona em ESM e CommonJS (`require('@synergyconnect/sdk')`). Crie a chave em **Configurações → API e webhooks →
+Chaves de API** no Synergy Connect e guarde-a em `SYNERGY_API_KEY`. O histórico de versões está no [CHANGELOG](CHANGELOG.md).
 
 ## Enviar uma mensagem
 
@@ -89,13 +94,14 @@ await synergy.onboarding.sessions.get(s.id);  // e .cancel(s.id)
 na API pelo `session_id` e confere o `state` dela. `completed` vem da sessão, nunca de `?status=completed`. Qualquer
 divergência lança `SynergyError` e nada é liberado. Exige o escopo `onboarding`.
 
-## Webhooks
+## Verificar um webhook
 
 ```ts
 import { webhooks } from '@synergyconnect/sdk/webhooks'; // sem o cliente
 
 // rawBody: os bytes EXATOS recebidos (string, ArrayBuffer ou Uint8Array), nunca o JSON já lido
 const event = await webhooks.constructEvent(rawBody, request.headers, process.env.SYNERGY_WEBHOOK_SECRET!);
+// com WebhookSignatureError, responda 401 e não processe nada
 ```
 
 `constructEvent` lança `WebhookSignatureError` se a assinatura for inválida; `webhooks.verify` devolve `boolean`.
