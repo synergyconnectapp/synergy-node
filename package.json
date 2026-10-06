@@ -1,5 +1,5 @@
 {
-  "name": "@synergyconnect/sdk",
+  "name": "@synergyconnectapp/sdk",
   "version": "1.0.0",
   "description": "SDK oficial da API pública do Synergy Connect (WhatsApp): mensagens, mídia, flows, handoff e verificação de webhooks.",
   "license": "MIT",
@@ -7,11 +7,11 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gabriel-g2n/synergy-node.git"
+    "url": "git+https://github.com/synergyconnectapp/synergy-node.git"
   },
-  "homepage": "https://github.com/gabriel-g2n/synergy-node#readme",
+  "homepage": "https://github.com/synergyconnectapp/synergy-node#readme",
   "bugs": {
-    "url": "https://github.com/gabriel-g2n/synergy-node/issues"
+    "url": "https://github.com/synergyconnectapp/synergy-node/issues"
   },
   "keywords": [
     "synergy",

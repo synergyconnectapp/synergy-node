@@ -1,4 +1,4 @@
-# @synergyconnect/sdk
+# @synergyconnectapp/sdk
 
 SDK oficial para a API pública do [Synergy Connect](https://synergyconnect.com.br) (WhatsApp). Sem dependências, só
 `fetch` e `crypto.subtle`: roda em Node ≥ 20, Bun, Deno e Cloudflare Workers.
@@ -6,16 +6,16 @@ SDK oficial para a API pública do [Synergy Connect](https://synergyconnect.com.
 ## Instalação
 
 ```sh
-npm install @synergyconnect/sdk
+npm install @synergyconnectapp/sdk
 ```
 
-Funciona em ESM e CommonJS (`require('@synergyconnect/sdk')`). Crie a chave em **Configurações → API e webhooks →
+Funciona em ESM e CommonJS (`require('@synergyconnectapp/sdk')`). Crie a chave em **Configurações → API e webhooks →
 Chaves de API** no Synergy Connect e guarde-a em `SYNERGY_API_KEY`. O histórico de versões está no [CHANGELOG](CHANGELOG.md).
 
 ## Enviar uma mensagem
 
 ```ts
-import Synergy from '@synergyconnect/sdk';
+import Synergy from '@synergyconnectapp/sdk';
 
 const synergy = new Synergy({ apiKey: process.env.SYNERGY_API_KEY }); // ausente, lê SYNERGY_API_KEY
 const wa = synergy.number('106540352242922');
@@ -97,7 +97,7 @@ divergência lança `SynergyError` e nada é liberado. Exige o escopo `onboardin
 ## Verificar um webhook
 
 ```ts
-import { webhooks } from '@synergyconnect/sdk/webhooks'; // sem o cliente
+import { webhooks } from '@synergyconnectapp/sdk/webhooks'; // sem o cliente
 
 // rawBody: os bytes EXATOS recebidos (string, ArrayBuffer ou Uint8Array), nunca o JSON já lido
 const event = await webhooks.constructEvent(rawBody, request.headers, process.env.SYNERGY_WEBHOOK_SECRET!);
@@ -113,7 +113,7 @@ configuração, nunca `true`. Um envelope `object: 'instagram'` passa pela mesma
 
 `SynergyError` → `ConnectionError`, `TimeoutError`, `AbortError`, `WebhookSignatureError` e `APIError`
 (`AuthenticationError`, `PermissionError`, `NotFoundError`, `BadRequestError`, `ConflictError`, `IdempotencyError`,
-`RateLimitError`, `ServerError`, `MetaError`), também em `@synergyconnect/sdk/errors`.
+`RateLimitError`, `ServerError`, `MetaError`), também em `@synergyconnectapp/sdk/errors`.
 
 Falha de rede, timeout e 5xx em envios são repetidos com a mesma `Idempotency-Key` (`maxRetries`, padrão 2); `429 130429`
 respeita `Retry-After` até 30 s; os limites próprios da Synergy (`1390006`, `1390010`, `1390012`, `1390015`) e qualquer

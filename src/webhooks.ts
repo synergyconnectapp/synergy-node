@@ -1,5 +1,5 @@
 // Webhook verification and typed events (devtools.md §5.3, S-44, S-45). Imports nothing but the errors: the subpath
-// `@synergyconnect/sdk/webhooks` never pulls the client. Only `crypto.subtle` and `TextEncoder` (zero `node:`).
+// `@synergyconnectapp/sdk/webhooks` never pulls the client. Only `crypto.subtle` and `TextEncoder` (zero `node:`).
 import { SynergyError, WebhookSignatureError } from './errors';
 
 export type RawBody = string | ArrayBuffer | Uint8Array;

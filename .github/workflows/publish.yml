@@ -4,7 +4,7 @@ name: Publish to npm
 # the secrets, and the provenance comes from the OIDC identity of this run. Every Action is pinned by the SHA of a
 # commit (devtools.md §5.8, S-46): a tag can be moved, a commit SHA cannot.
 #
-# One-time setup on npmjs.com (Packages → @synergyconnect/sdk → Settings → Trusted publishing → GitHub Actions):
+# One-time setup on npmjs.com (Packages → @synergyconnectapp/sdk → Settings → Trusted publishing → GitHub Actions):
 # owner `gabriel-g2n`, repository `synergy-node`, workflow `publish.yml`, allowed action: direct publishing. The
 # package must already exist, so the very first version (1.0.0) is created with a staged publish (or a first manual
 # publish with `--access public`); configure the Trusted Publisher afterwards and create it only when the tag is
