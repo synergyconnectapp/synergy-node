@@ -4,6 +4,12 @@ All notable changes to `@synergyconnectapp/sdk` are documented here. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.1]
+
+### Changed
+
+- Package metadata: author and contact
+
 ## [1.0.0]
 
 First public release, published to npm with provenance from GitHub Actions.
