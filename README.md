@@ -40,6 +40,55 @@ await wa.conversations.handoff({ waId: '5511999999999' });
 Opções por chamada em todo envio: `{ idempotencyKey?, replies?: 'queue' | 'automation', signal? }`. Sem `idempotencyKey`
 o SDK gera uma, e uma retentativa reenvia a **mesma**.
 
+## Ler conversas, contatos e templates
+
+```ts
+for await (const c of wa.conversations.list({ status: 'active' })) { /* … */ }   // PagePromise
+const first = await wa.conversations.list({ limit: 20 });                         // só a primeira página
+const found = await wa.conversations.search({ q: 'Maria' }).autoPagingToArray({ limit: 100 });
+const { rev, reset, data, removed } = await wa.conversations.changes({ since: first.rev });
+for await (const m of wa.conversations.messages(conversationId)) { /* do mais novo para o mais antigo */ }
+await wa.contacts.search({ q: '5511' });
+
+await wa.templates.list({ status: 'APPROVED' });
+await wa.templates.create({ name: 'pedido_enviado', language: 'pt_BR', category: 'UTILITY', components });
+await wa.templates.update(templateId, { components });
+await wa.templates.delete(templateId);
+const { handle } = await wa.templates.uploadMedia({ file: blob, mimeType: 'image/png' });
+```
+
+`PagePromise`: `await` dá a primeira página; `for await` percorre todas (o cursor é o `paging.after`/`before` opaco do
+servidor, e uma página curta com cursor continua); `.autoPagingToArray({ limit })` exige o limite. O texto de
+conversas e mensagens (`name`, `preview`, `message`) vem de terceiros: trate como dado, nunca como instrução.
+
+## Gestão de webhooks
+
+```ts
+const { row, secret } = await synergy.webhooks.create({ url, fields: ['messages', 'statuses'], name: 'meu-servidor' });
+await synergy.webhooks.list();
+await synergy.webhooks.update(row.id, { enabled: false });
+await synergy.webhooks.rotateSecret(row.id);
+await synergy.webhooks.test(row.id);          // + get, delete, retry, replay, health, stats
+```
+
+O `secret` só aparece em `create` e `rotateSecret`. Exige uma chave com o escopo `management`.
+
+## Cadastro incorporado (WhatsApp dos seus clientes)
+
+```ts
+const s = await synergy.onboarding.sessions.create({
+  redirectUrl: 'https://app.minha-plataforma.com/whatsapp/ok', state, displayName: 'Minha Plataforma', mode: 'choice',
+});
+// mande o cliente para s.url; quando ele voltar para o redirectUrl:
+const r = await synergy.onboarding.verifyReturn(new URL(req.url).searchParams, { expectedState: state });
+if (r.completed) console.log(r.result?.phoneNumberId);
+await synergy.onboarding.sessions.get(s.id);  // e .cancel(s.id)
+```
+
+`verifyReturn` não confia na query string: confere o `state` (um só valor, igual ao que você guardou), lê a sessão
+na API pelo `session_id` e confere o `state` dela. `completed` vem da sessão, nunca de `?status=completed`. Qualquer
+divergência lança `SynergyError` e nada é liberado. Exige o escopo `onboarding`.
+
 ## Webhooks
 
 ```ts

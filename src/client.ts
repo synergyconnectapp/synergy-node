@@ -1,6 +1,8 @@
 import { camelize } from './case';
 import { AbortError, APIError, ConnectionError, SynergyError, TimeoutError } from './errors';
 import { NumberClient } from './number';
+import { OnboardingResource } from './resources/onboarding';
+import { WebhooksResource } from './resources/webhooks-admin';
 import { VERSION } from './version';
 
 export const DEFAULT_BASE_URL = 'https://api.synergyconnect.com.br';
@@ -96,6 +98,10 @@ const isOwnCode = (code: number | undefined) => code !== undefined && code >= 1_
 export class Synergy {
   readonly graphVersion: string;
   readonly numbers: { list: (options?: RequestOptions) => Promise<NumbersList> };
+  /** The organization's webhooks (scope `management`). */
+  readonly webhooks: WebhooksResource;
+  /** Hosted WhatsApp signup for your customers (scope `onboarding`). */
+  readonly onboarding: OnboardingResource;
 
   readonly #apiKey: string;
   readonly #origin: string;
@@ -138,6 +144,8 @@ export class Synergy {
     this.#retryDelay = nonNegative(options.retryDelay, DEFAULT_RETRY_DELAY_MS, 'retryDelay');
     this.#userAgent = `synergy-node/${VERSION}${options.userAgentSuffix ? ` ${options.userAgentSuffix}` : ''}`;
 
+    this.webhooks = new WebhooksResource(this);
+    this.onboarding = new OnboardingResource(this);
     this.numbers = {
       list: async (o) => {
         const raw = await this.request({ method: 'GET', path: '/v1/numbers', retry: 'safe', signal: o?.signal });

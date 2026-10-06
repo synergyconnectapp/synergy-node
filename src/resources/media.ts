@@ -21,6 +21,21 @@ const MEDIA_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 export type UploadFile = Blob | ArrayBuffer | Uint8Array;
 
+/** Validates the `file` and `mimeType` of an upload (media and template media share it). */
+export function checkUpload(method: string, params: { file: UploadFile; mimeType: string }): { file: UploadFile; mimeType: string } {
+  const { file, mimeType } = params;
+  if (typeof mimeType !== 'string' || mimeType === '') throw new SynergyError(`${method} needs the \`mimeType\` of the file.`);
+  if (!(file instanceof Blob) && !(file instanceof ArrayBuffer) && !(file instanceof Uint8Array)) {
+    throw new TypeError(`${method} \`file\` must be a Blob, ArrayBuffer or Uint8Array (a size known up front, never a stream).`);
+  }
+  return { file, mimeType };
+}
+
+export const toBlob = (file: UploadFile, mimeType: string): Blob =>
+  file instanceof Blob && file.type === mimeType ? file : new Blob([file as BlobPart], { type: mimeType });
+
+export const fileName = (file: UploadFile): string => (file instanceof Blob && 'name' in file ? String(file.name) : 'file');
+
 export class MediaResource {
   constructor(
     private readonly client: Synergy,
@@ -32,16 +47,11 @@ export class MediaResource {
    * is a `Blob`, an `ArrayBuffer` or a `Uint8Array`, never a stream.
    */
   async upload(params: { file: UploadFile; mimeType: string; filename?: string }, options?: RequestOptions): Promise<MediaUpload> {
-    const { file, mimeType } = params;
-    if (typeof mimeType !== 'string' || mimeType === '') throw new SynergyError('media.upload needs the `mimeType` of the file.');
-    if (!(file instanceof Blob) && !(file instanceof ArrayBuffer) && !(file instanceof Uint8Array)) {
-      throw new TypeError('media.upload `file` must be a Blob, ArrayBuffer or Uint8Array (a size known up front, never a stream).');
-    }
-    const blob = file instanceof Blob && file.type === mimeType ? file : new Blob([file as BlobPart], { type: mimeType });
+    const { file, mimeType } = checkUpload('media.upload', params);
     const form = new FormData();
     form.append('messaging_product', 'whatsapp');
     form.append('type', mimeType);
-    form.append('file', blob, params.filename ?? (file instanceof Blob && 'name' in file ? String(file.name) : 'file'));
+    form.append('file', toBlob(file, mimeType), params.filename ?? fileName(file));
     const raw = await this.client.request<{ id: string }>({
       method: 'POST',
       path: `/${this.client.graphVersion}/${this.phoneNumberId}/media`,

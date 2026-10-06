@@ -38,6 +38,18 @@ describe('the built package', () => {
     expect(typeof webhooks.constructEvent).toBe('function');
   });
 
+  it('the built client has the whole surface (K2)', async () => {
+    const { default: Synergy, PagePromise } = await import(new URL('index.js', dist).href);
+    const synergy = new Synergy({ apiKey: 'syn_x', fetch: () => Promise.reject(new Error('offline')) });
+    const wa = synergy.number('106540352242922');
+    for (const fn of [synergy.webhooks.create, synergy.webhooks.replay, synergy.onboarding.verifyReturn, synergy.onboarding.sessions.create, wa.templates.create, wa.contacts.search]) {
+      expect(typeof fn).toBe('function');
+    }
+    expect(wa.conversations.list()).toBeInstanceOf(PagePromise);
+    const cjs = require('../dist/index.cjs');
+    expect(typeof cjs.PagePromise).toBe('function');
+  });
+
   it('./webhooks does not pull the client', () => {
     const source = readFileSync(new URL('webhooks.js', dist), 'utf8');
     expect(source).not.toMatch(/class Synergy\b|fetch\(/);
