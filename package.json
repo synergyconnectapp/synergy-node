@@ -1,0 +1,84 @@
+{
+  "name": "@synergyconnect/sdk",
+  "version": "0.1.0",
+  "description": "SDK oficial da API pública do Synergy Connect (WhatsApp): mensagens, mídia, flows, handoff e verificação de webhooks.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabriel-g2n/synergy-node.git"
+  },
+  "keywords": [
+    "synergy",
+    "synergy-connect",
+    "whatsapp",
+    "sdk",
+    "webhooks"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "webhooks": [
+        "./dist/webhooks.d.ts"
+      ],
+      "errors": [
+        "./dist/errors.d.ts"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./webhooks": {
+      "import": {
+        "types": "./dist/webhooks.d.ts",
+        "default": "./dist/webhooks.js"
+      },
+      "require": {
+        "types": "./dist/webhooks.d.cts",
+        "default": "./dist/webhooks.cjs"
+      }
+    },
+    "./errors": {
+      "import": {
+        "types": "./dist/errors.d.ts",
+        "default": "./dist/errors.js"
+      },
+      "require": {
+        "types": "./dist/errors.d.cts",
+        "default": "./dist/errors.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && vitest run",
+    "prepublishOnly": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "tsdown": "0.23.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
