@@ -100,7 +100,7 @@ const event = await webhooks.constructEvent(rawBody, request.headers, process.en
 
 `constructEvent` lança `WebhookSignatureError` se a assinatura for inválida; `webhooks.verify` devolve `boolean`.
 Com `X-Synergy-Signature` ele confere o carimbo de tempo (tolerância de 300 s, `{ toleranceSeconds }`) e o
-`X-Synergy-Delivery-Id`; sem ele, cai para `X-Hub-Signature-256` e marca `timestamped: false`. Segredo vazio é erro de
+`X-Synergy-Delivery-Id` (só `[A-Za-z0-9_-]`, até 200 caracteres; qualquer outro formato é recusado antes do HMAC); sem ele, cai para `X-Hub-Signature-256` e marca `timestamped: false`. Segredo vazio é erro de
 configuração, nunca `true`. Um envelope `object: 'instagram'` passa pela mesma verificação, com `wabaId: null`.
 
 ## Erros e retentativas

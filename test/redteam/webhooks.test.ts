@@ -142,6 +142,35 @@ describe('K-02 · replay: the timestamp and the delivery id count (S-44)', () =>
   });
 });
 
+describe('K-04 · the delivery id format, checked before the HMAC (RTF-07, S-44)', () => {
+  const signedWith = (deliveryId: string, body: string = TS.body) => ({
+    'X-Synergy-Signature': synergySignature(body, TS.secret, deliveryId, NOW),
+    'X-Synergy-Delivery-Id': deliveryId,
+  });
+
+  it('blocked: RTF-07 bytes moved from the body into a delivery id with a dot (same HMAC) → refused', async () => {
+    const cut = TS.body.indexOf('.') + 1;
+    const forgedId = `${TS.deliveryId}.${TS.body.slice(0, cut - 1)}`;
+    const headers = signedWith(forgedId, TS.body.slice(cut));
+    // the forged id is the one the HMAC was computed for, so only the format check can refuse it
+    expect(headers['X-Synergy-Signature']).toBe(synergySignature(TS.body.slice(cut), TS.secret, forgedId, NOW));
+    expect(await verify(TS.body.slice(cut), headers, TS.secret)).toBe(false);
+    await expect(constructEvent(TS.body.slice(cut), headers, TS.secret)).rejects.toBeInstanceOf(WebhookSignatureError);
+  });
+
+  it('blocked: RTF-07 any id outside [A-Za-z0-9_-]{1,200} is refused even when correctly signed for it', async () => {
+    for (const id of ['ev-1:abcd1234', 'ev-1+2', 'a.b', 'ev 1', 'ev-1\n', 'é', 'a'.repeat(201)]) {
+      expect(await verify(TS.body, signedWith(id), TS.secret), JSON.stringify(id)).toBe(false);
+    }
+  });
+
+  it('control: 200 characters of [A-Za-z0-9_-] are accepted', async () => {
+    const id = `${'a'.repeat(100)}_-${'Z9'.repeat(49)}`;
+    expect(id).toHaveLength(200);
+    expect(await verify(TS.body, signedWith(id), TS.secret)).toBe(true);
+  });
+});
+
 describe('K-03 · an empty secret is a configuration error, never a pass (S-45)', () => {
   const headers = { 'X-Hub-Signature-256': hubSignature(HUB.body, '') };
 

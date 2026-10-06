@@ -11,7 +11,9 @@ export interface VerifyOptions {
 }
 
 const DEFAULT_TOLERANCE_SECONDS = 300;
-const MAX_DELIVERY_ID_LENGTH = 256;
+// The delivery id sits between two dots in `t.deliveryId.body`: a `.` (or any other separator) inside it would let bytes
+// move from the body into the id with the same HMAC (RTF-07). The server normalizes every id to this charset (T-417).
+const DELIVERY_ID = /^[A-Za-z0-9_-]{1,200}$/;
 // the format is checked BEFORE any comparison: prefix, lowercase hex of exactly 64 characters, one signature only
 const HUB_SIGNATURE = /^sha256=([0-9a-f]{64})$/;
 const SYNERGY_SIGNATURE = /^t=(\d{1,15}),v1=([0-9a-f]{64})$/;
@@ -142,7 +144,7 @@ async function check(rawBody: RawBody, headers: HeadersLike, secret: string, opt
   try {
     const synergy = header(headers, 'x-synergy-signature');
     const delivery = header(headers, 'x-synergy-delivery-id');
-    const deliveryId = typeof delivery === 'string' && delivery !== '' ? delivery : null;
+    const deliveryId = typeof delivery === 'string' && DELIVERY_ID.test(delivery) ? delivery : null;
 
     if (synergy !== undefined) {
       // with the timestamped header present it is the ONLY one that counts: a bad one never falls back to X-Hub-Signature-256
@@ -151,7 +153,7 @@ async function check(rawBody: RawBody, headers: HeadersLike, secret: string, opt
       if (!m) return bad('malformed signature header', true);
       const t = Number(m[1]);
       if (!Number.isSafeInteger(t)) return bad('malformed signature header', true);
-      if (deliveryId === null || deliveryId.length > MAX_DELIVERY_ID_LENGTH) return bad('missing or invalid delivery id', true);
+      if (deliveryId === null) return bad('missing or invalid delivery id', true);
       const now = Math.floor(Date.now() / 1000);
       if (Math.abs(now - t) > tolerance) return bad('timestamp outside the tolerance window', true);
       const ok = await hmacMatches(secret, m[2] as string, [encoder.encode(`${t}.${deliveryId}.`), body]);
