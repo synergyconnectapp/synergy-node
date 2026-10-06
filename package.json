@@ -82,7 +82,8 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
-    "test": "npm run build && vitest run",
+    "test": "npm run build && npm run test:built",
+    "test:built": "vitest run",
     "test:contract": "node scripts/contract.mjs",
     "test:live": "vitest run --config vitest.live.config.ts",
     "prepublishOnly": "npm run typecheck && npm test"
