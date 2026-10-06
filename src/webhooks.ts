@@ -11,12 +11,15 @@ export interface VerifyOptions {
 }
 
 const DEFAULT_TOLERANCE_SECONDS = 300;
-// The delivery id sits between two dots in `t.deliveryId.body`: a `.` (or any other separator) inside it would let bytes
-// move from the body into the id with the same HMAC (RTF-07). The server normalizes every id to this charset (T-417).
+// The two format rules of the signed contract, copied IDENTICAL from the Synergy API (src/api/public/webhook-events.ts:
+// SIGNATURE_T_PATTERN, DELIVERY_ID_PATTERN) and the n8n trigger. The delivery id sits between two dots in `t.deliveryId.body`: a `.`
+// (or any other separator) inside it would let bytes move from the body into the id with the same HMAC (RTF-07). The server
+// normalizes every id to this charset (T-417, T-418).
+const SIGNATURE_T = /^\d{1,12}$/;
 const DELIVERY_ID = /^[A-Za-z0-9_-]{1,200}$/;
 // the format is checked BEFORE any comparison: prefix, lowercase hex of exactly 64 characters, one signature only
 const HUB_SIGNATURE = /^sha256=([0-9a-f]{64})$/;
-const SYNERGY_SIGNATURE = /^t=(\d{1,15}),v1=([0-9a-f]{64})$/;
+const SYNERGY_SIGNATURE = /^t=([^,]*),v1=([0-9a-f]{64})$/;
 
 export interface OnboardingEventValue {
   event: 'onboarding.completed' | 'onboarding.failed' | 'onboarding.expired';
@@ -150,7 +153,7 @@ async function check(rawBody: RawBody, headers: HeadersLike, secret: string, opt
       // with the timestamped header present it is the ONLY one that counts: a bad one never falls back to X-Hub-Signature-256
       if (synergy === null) return bad('malformed signature header', true);
       const m = SYNERGY_SIGNATURE.exec(synergy);
-      if (!m) return bad('malformed signature header', true);
+      if (!m || !SIGNATURE_T.test(m[1] as string)) return bad('malformed signature header', true);
       const t = Number(m[1]);
       if (!Number.isSafeInteger(t)) return bad('malformed signature header', true);
       if (deliveryId === null) return bad('missing or invalid delivery id', true);
